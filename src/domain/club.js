@@ -194,26 +194,38 @@ function withActivityCoords(task, pools) {
   };
 }
 
+function isOperableSignup(item) {
+  const activityStatus = String(item?.activityStatus ?? '');
+  if (activityStatus === '3') return false;
+  const option = resolveEffectiveOptionStatus(item);
+  if (option === '4' || option === '6' || option === '7' || option === '3') return false;
+  return option === '1' || option === '2' || activityStatus === '1' || activityStatus === '2';
+}
+
+export function matchesSignTask(signTask, item) {
+  if (!signTask || !item) return false;
+  const taskId = Number(signTask.activityId || signTask.clubActivityId);
+  const itemId = resolveActivityId(item);
+  return Number.isFinite(taskId) && taskId > 0 && itemId === taskId;
+}
+
 export function resolveOperableSignTask({ statusPayload, activities = [], pending = [] } = {}) {
   const pools = [...pending, ...activities];
   const fromStatus = normalizeSignTask(statusPayload);
   if (fromStatus) return withActivityCoords(fromStatus, pools);
 
-  const joinedPending = pending.find((item) => resolveActivityId(item));
-  const joinedListed = activities.find((item) => {
-    const status = resolveEffectiveOptionStatus(item);
-    return status === '1' || status === '2';
-  });
-  const source = joinedPending || joinedListed;
+  const source = pending.find(isOperableSignup) || activities.find(isOperableSignup);
   if (!source) return null;
 
-  return withActivityCoords(
-    normalizeSignTask({
-      ...source,
-      activityId: resolveActivityId(source),
-    }),
-    pools,
-  );
+  const task = normalizeSignTask({
+    ...source,
+    activityId: resolveActivityId(source),
+  });
+  if (!task) return null;
+  if (source.signInStatus == null || source.signInStatus === '') {
+    delete task.signStatus;
+  }
+  return withActivityCoords(task, pools);
 }
 
 function isSignedStatus(status) {
@@ -389,7 +401,10 @@ export function resolveSignTaskPhase(task, activities = []) {
     return 'completed';
   }
 
-  if (String(task.signStatus ?? '') === '1' || resolveEffectiveOptionStatus(task) === '4') {
+  const option = resolveEffectiveOptionStatus(task);
+  const hasExplicitSignIn = task.signInStatus != null && task.signInStatus !== '';
+  const strayListSign = !hasExplicitSignIn && (option === '1' || option === '2');
+  if (!strayListSign && (String(task.signStatus ?? '') === '1' || option === '4')) {
     return 'completed';
   }
 

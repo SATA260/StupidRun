@@ -10,6 +10,7 @@ import {
   mergeActivitySignState,
   normalizeSignTask,
   resolveClubAction,
+  matchesSignTask,
   resolveOperableSignTask,
   resolveSignTaskPhase,
   sameActivity,
@@ -86,6 +87,35 @@ test('签到任务缺坐标时用活动列表里的经纬度，已签到后动�
     activities,
   });
   expect(signActionForPhase(resolveSignTaskPhase(signed, activities))).toEqual({ signType: '2', label: '签退' });
+});
+
+test('报名后显示这一场的签到，不拿已结束任务或列表 signStatus 充数', () => {
+  const registered = {
+    clubActivityId: 50013,
+    optionStatus: '1',
+    signStatus: '1',
+    startTime: '18:00',
+    latitude: '30.1',
+    longitude: '104.1',
+    activityName: '课外体育锻炼',
+  };
+  const finished = {
+    clubActivityId: 50011,
+    activityStatus: '3',
+    optionStatus: '4',
+    signStatus: '1',
+    mmdd: '10-19',
+    startTime: '18:00',
+  };
+  const task = resolveOperableSignTask({
+    statusPayload: null,
+    activities: [registered],
+    pending: [finished],
+  });
+  expect(task.activityId).toBe(50013);
+  expect(matchesSignTask(task, registered)).toBe(true);
+  expect(matchesSignTask(task, finished)).toBe(false);
+  expect(signActionForPhase(resolveSignTaskPhase(task, [registered]))).toEqual({ signType: '1', label: '签到' });
 });
 
 test('没有签到状态时，已报名活动仍然可以签到', () => {

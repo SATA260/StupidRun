@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from 'expo-router';
 
 import { api } from '@/api';
@@ -12,6 +13,7 @@ import {
 } from '@/domain/run';
 import { buildSemesterStats } from '@/domain/semester';
 import { submitRun } from '@/domain/submitRun';
+import { pickDefaultRoute } from '@/domain/defaultRoute';
 import { getMapNames, loadMapFiles } from '@/domain/map';
 import { useSession } from '@/session/SessionProvider';
 import { refresh } from '@/session/store';
@@ -71,17 +73,24 @@ export default function RunScreen() {
 
   useEffect(() => {
     let active = true;
-    loadMapFiles().then(() => {
+    Promise.all([loadMapFiles(), AsyncStorage.getItem('stupidrun.default_route')]).then(([, saved]) => {
       if (!active) return;
       const names = getMapNames();
       const options = Object.entries(names).map(([id, name]) => ({ id, name }));
       setRoutes(options);
-      if (options.length > 0) setRoute(options[0].id);
+      const next = pickDefaultRoute(options, saved || '');
+      if (next) setRoute(next);
     });
     return () => {
       active = false;
     };
   }, []);
+
+  const chooseRoute = (id) => {
+    setRoute(id);
+    setRoutesOpen(false);
+    AsyncStorage.setItem('stupidrun.default_route', id).catch(() => {});
+  };
 
   const fillFromStandard = () => {
     const nextDistance = randomIntNonThousand(bounds.distanceMin, bounds.distanceMax);
@@ -181,10 +190,7 @@ export default function RunScreen() {
                     return (
                       <Pressable
                         key={item.id}
-                        onPress={() => {
-                          setRoute(item.id);
-                          setRoutesOpen(false);
-                        }}
+                        onPress={() => chooseRoute(item.id)}
                         style={[styles.routeOption, selected && styles.routeOptionOn]}>
                         <Text style={[styles.routeOptionText, selected && styles.routeOptionTextOn]}>{item.name}</Text>
                       </Pressable>

@@ -158,18 +158,31 @@ export class AppApiClient {
       (response) => {
         const data = response.data;
         if (data && (data.code === 10001 || data.code === 30005 || data.msg === 'not_login')) {
-          this.onAuthFailure();
+          this.rejectStaleAuth(response.config);
         }
         return response;
       },
       (error) => {
         if (error.response && [401, 403].includes(error.response.status)) {
-          this.onAuthFailure();
+          this.rejectStaleAuth(error.config);
         }
         console.error('API Error:', error.response || error.message);
         return Promise.reject(error);
       },
     );
+  }
+
+  requestToken(config) {
+    const headers = config?.headers;
+    if (!headers) return '';
+    if (typeof headers.get === 'function') return headers.get('token') || '';
+    return headers.token || '';
+  }
+
+  rejectStaleAuth(config) {
+    const sent = this.requestToken(config);
+    const current = this.tokenProvider();
+    if (sent && sent === current) this.onAuthFailure();
   }
 
   getCacheKey(url, params) {

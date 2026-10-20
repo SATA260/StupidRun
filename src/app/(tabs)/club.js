@@ -18,10 +18,10 @@ import {
   registrationStatusLabel,
   resolveActivityId,
   resolveClubAction,
+  matchesSignTask,
   resolveOperableSignTask,
   resolveSignTaskPhase,
   responseMessage,
-  sameActivity,
   shiftDate,
   signActionForPhase,
   signInStatusLabel,
@@ -347,7 +347,7 @@ export default function ClubScreen() {
               const action = resolveClubAction(item);
               const registered = listMode === 'mine' || isRegisteredActivity(item);
               const signLabels = registered ? activitySignLabels(item) : null;
-              const isThisTask = Boolean(signTask && sameActivity(signTask, item));
+              const isThisTask = matchesSignTask(signTask, item);
               const key = `${activityDateText(item)}-${item.startTime || ''}-${activityId || index}`;
               const when = [activityDateText(item), `${item.startTime || '--:--'} - ${item.endTime || '--:--'}`]
                 .filter(Boolean)

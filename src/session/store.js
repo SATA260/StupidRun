@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../api';
 import { hydrateCustomMaps, setCustomMapStorage } from '../domain/map';
 import { getToken, onAuthFailure, setToken } from './token';
+import { mergeLoginUser } from './user';
 
 const APP_STATE_KEY = 'byerun.app_state';
 
@@ -68,8 +69,9 @@ export async function clearSession() {
 }
 
 function applyUser(userInfo) {
-  state.userInfo = userInfo || null;
-  setToken(userInfo?.oauthToken?.token || '');
+  const next = mergeLoginUser(state.userInfo, userInfo);
+  state.userInfo = next;
+  setToken(next?.oauthToken?.token || '');
 }
 
 export async function hydrate() {
