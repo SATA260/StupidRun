@@ -363,7 +363,16 @@ export function matchesQueryDate(item, queryDate) {
 }
 
 export function activitySignLabels(item) {
-  const fromMyTask = item?.activityStatus != null && item.activityStatus !== '';
+  const option = resolveEffectiveOptionStatus(item);
+  const activityStatus = String(item?.activityStatus ?? '');
+  const live = option === '1' || option === '2' || activityStatus === '1' || activityStatus === '2';
+  if (live) {
+    return {
+      signIn: isSignedStatus(item?.signInStatus) ? '已签到' : '未签到',
+      signOut: isSignedStatus(item?.signBackStatus) ? '已签退' : '未签退',
+    };
+  }
+  const fromMyTask = activityStatus !== '';
   const hasExplicitSign =
     (item?.signInStatus != null && item.signInStatus !== '') ||
     (item?.signBackStatus != null && item.signBackStatus !== '');
@@ -401,14 +410,7 @@ export function resolveSignTaskPhase(task, activities = []) {
     return 'completed';
   }
 
-  const option = resolveEffectiveOptionStatus(task);
-  const hasExplicitSignIn = task.signInStatus != null && task.signInStatus !== '';
-  const strayListSign = !hasExplicitSignIn && (option === '1' || option === '2');
-  if (!strayListSign && (String(task.signStatus ?? '') === '1' || option === '4')) {
-    return 'completed';
-  }
-
-  if (isSignedStatus(task.signInStatus) || String(task.signStatus ?? '') === '3') {
+  if (isSignedStatus(task.signInStatus)) {
     return 'signedIn';
   }
 
@@ -416,8 +418,9 @@ export function resolveSignTaskPhase(task, activities = []) {
   if (!optionStatus) {
     const activityId = Number(task.activityId);
     const linked = activities.find((item) => resolveActivityId(item) === activityId);
-    optionStatus = String(linked?.optionStatus ?? task.signStatus ?? '').trim();
+    optionStatus = String(linked?.optionStatus ?? '').trim();
   }
+  if (!optionStatus) optionStatus = String(task.signStatus ?? '').trim();
   return optionStatus === '1' ? 'joined' : 'unsigned';
 }
 

@@ -29,8 +29,18 @@ test('签到状态决定当前是签到、签退还是已完成', () => {
   expect(resolveSignTaskPhase({ optionStatus: '1', signInStatus: 0, signBackStatus: 0 })).toBe('joined');
   expect(resolveSignTaskPhase({ signInStatus: 1, signBackStatus: 0 })).toBe('signedIn');
   expect(resolveSignTaskPhase({ signInStatus: 1, signBackStatus: 1 })).toBe('completed');
-  expect(resolveSignTaskPhase({ signStatus: '1' })).toBe('completed');
-  expect(resolveSignTaskPhase({ signStatus: '3' })).toBe('signedIn');
+  expect(resolveSignTaskPhase({ signStatus: '1', signInStatus: null, signBackStatus: null })).toBe('joined');
+  expect(signActionForPhase(resolveSignTaskPhase({ activityId: 50013, signStatus: '1', signInStatus: null, signBackStatus: null }))).toEqual({
+    signType: '1',
+    label: '签到',
+  });
+  expect(activitySignLabels({
+    clubActivityId: 50013,
+    activityStatus: '2',
+    optionStatus: '1',
+    signStatus: '1',
+  })).toEqual({ signIn: '未签到', signOut: '未签退' });
+  expect(resolveSignTaskPhase({ signStatus: '3', signInStatus: '1', signBackStatus: null })).toBe('signedIn');
 });
 
 test('可报名活动给出报名，已报名活动给出取消', () => {
