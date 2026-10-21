@@ -1,56 +1,59 @@
-# Welcome to your Expo app 👋
+# StupidRun
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+校园跑和俱乐部的手机应用。跑步规则、轨迹生成、登录和俱乐部接口沿用原来的 byerun 逻辑，界面用 Expo 做成 Android 应用。
 
-## Get started
+## 功能
 
-1. Install dependencies
+底部有三个页面。
 
-   ```bash
-   npm install
-   ```
+**校园跑**
 
-2. Start the app
+- 用手机号和密码登录，登录状态会保存在本机。刷新用户信息时继续用当前 token，不会因为接口没再带回 token 就把人退出。
+- 查看本学期已跑公里、要求和完成次数。
+- 填写距离和时间，选择校园路线，按学期标准生成轨迹并提交跑步。
+- 选过的路线会记成默认路线，之后一直用它，除非手动再改。
+- 「记录」是跑步页里的二级页面，查看最近的跑步记录。
 
-   ```bash
-   npx expo start
-   ```
+**俱乐部**
 
-In the output, you'll find options to open the app in a
+- 按日期查看活动列表，报名或取消报名。状态按每一场活动单独显示，不会把一场的报名套到所有场次上。
+- 「我的任务」查看已报名的活动。
+- 签到、签退只出现在当前这一场上。没签到显示「签到」，签到之后显示「签退」，签到和签退都完成则不再显示按钮。
+- 签到坐标用的是这场活动场地的经纬度，来自签到状态接口或活动列表，不读取手机定位。
+- 可以查看签到记录和学期记录。
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+**我的**
 
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- 查看姓名、手机、学号和学校。
+- 退出登录。
 
-## Get a fresh project
-
-When you're ready, run:
+## 本地运行
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+Android 模拟器或 Expo Go 都可以打开。模拟器里的 Expo Go 图标仍是 Expo 自己的。
 
-### Other setup steps
+## 打包 APK
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+本机需要 JDK 21 和 Android SDK。在项目目录执行：
 
-## Learn more
+```bash
+export JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
+export ANDROID_HOME="/opt/homebrew/share/android-commandlinetools"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$PATH"
 
-To learn more about developing your project with Expo, look at the following resources:
+npx expo prebuild --platform android
+cd android
+./gradlew assembleRelease
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+安装包在 `android/app/build/outputs/apk/release/app-release.apk`。桌面图标和启动图使用应用封面。这个包是调试签名，可以安装使用，不适合上架。
 
-## Join the community
+## 测试
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npm test
+```
